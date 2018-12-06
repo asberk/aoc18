@@ -81,7 +81,7 @@ def answer2(minutes, logs, gids):
     most_sleeps = np.max([v.max() for v in minutes_asleep.values()])
     sleepiest_gid = [k for k,v in minutes_asleep.items()
                      if np.any(v == most_sleeps)]
-    assert len(sleepiest_gid) == 1, "more than one gid found."
+    assert len(sleepiest_gid) == 1, f"more than one gid found: {sleepiest_gid}"
     sleepiest_gid = sleepiest_gid[0]
     sleepiest_minute = np.argmax(minutes_asleep[sleepiest_gid])
     return sleepiest_minute * sleepiest_gid
