@@ -89,6 +89,17 @@ def answer1(df):
     sleepiest_minute = np.argmax(minutes_asleep[sleepy_gid])
     return sleepy_gid * sleepiest_minute
 
+def answer2(df):
+    minutes_asleep, _ = countSleepiness(df)
+    most_sleeps = np.max([v.max() for v in minutes_asleep.values()])
+    sleepiest_gid = [k for k,v in minutes_asleep.items()
+                     if np.any(v == most_sleeps)]
+    assert len(sleepiest_gid) == 1, "more than one gid found."
+    sleepiest_gid = sleepiest_gid[0]
+    sleepiest_minute = np.argmax(minutes_asleep[sleepiest_gid])
+    return sleepiest_minute * sleepiest_gid
+
+
 if __name__ == "__main__":
     day = '04'
     print(f'Day {day}')
@@ -106,6 +117,7 @@ if __name__ == "__main__":
 
     print(answer1(df))
     print('\nPart 2: ', end='')
+    print(answer2(df))
 
     
     
