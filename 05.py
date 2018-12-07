@@ -1,7 +1,5 @@
 from util import read
 import numpy as np
-import re
-import string
 from collections import deque
 
 day = '05'
@@ -38,7 +36,8 @@ def collapse(s):
 
 
 collapsed = collapse(x)
-print("Part 1: ", len(collapsed))
+p1 = len(collapsed)
+print("Part 1: ", p1)
 
 def removeAndReact(s, a):
     a = a.lower()
@@ -47,9 +46,11 @@ def removeAndReact(s, a):
     return len(c)
 
 min_length = len(x)
-for a in string.ascii_lowercase:
+ascii_lowercase = 'abcdefghijklmnopqrstuvwxyz'
+for a in ascii_lowercase:
     length = removeAndReact(x, a)
     if length < min_length:
         min_length = np.copy(length)
 
-print("Part 2: ", int(min_length))
+p2 = int(min_length)
+print("Part 2: ", p2)
