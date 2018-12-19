@@ -57,9 +57,31 @@ def summedAreaTable(c):
                     for i in range(c.shape[0])])
     return sat
 
-#def getMaxPowerSize(c, S, w=3):
-    
-    
+def computeArea(S, i, j, w):
+    if (i == 0) and (j == 0):
+        return S[w-1, w-1]
+    elif i == 0:
+        return S[i+w-1, j+w-1] - S[i+w-1, j-1]
+    elif j == 0:
+        return S[i+w-1, j+w-1] - S[i-1, j+w-1]
+    else:
+        return S[i+w-1, j+w-1] + S[i-1, j-1] - S[i+w-1, j-1] - S[i-1, j+w-1]
+    return
+
+def getMaxPowerSize(c, S=None, w=3):
+    if S is None:
+        S = summedAreaTable(c)
+    all_powers = [[computeArea(S, i, j, w)
+                   for j in range(S.shape[1]-w+1)]
+                  for i in range(S.shape[0]-w+1)]
+    all_powers = np.array(all_powers)
+    all_powers_max = all_powers.max()
+    i_max, j_max = np.where(all_powers == all_powers_max)
+    return [all_powers_max, j_max[0] + 1, i_max[0]+1, w]
+
+S = summedAreaTable(c)
+P = np.array([getMaxPowerSize(c, S, w) for w in range(1, 301)])
+print('summed area table:', P[np.argmax(P[:, 0])])
 
 # Part 2
 sizes = range(1, 301)
@@ -70,4 +92,6 @@ for j, w in enumerate(sizes):
     if (j > 25) and (powers[j][0] < powers[j-1][0]):
         break
 powers = np.array(powers)
-print(powers[np.argmax(powers[:, 0])])
+print('arbitrary cut-off', powers[np.argmax(powers[:, 0])])
+
+
