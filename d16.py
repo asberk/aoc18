@@ -1,3 +1,13 @@
+"""
+d16
+
+Day 16 of AoC '18
+
+Author: Aaron Berk <aberk@math.ubc.ca>
+Copyright © 2020, Aaron Berk, all rights reserved.
+Created: 17 May 2020
+
+"""
 from time import time
 import pandas as pd
 import numpy as np
@@ -225,3 +235,5 @@ t3 = time()
 print("\nPart 2")
 print(registers[0])
 print(f"Duration: {t3 - t2:.3f} sec")
+
+# # d16.py ends here
