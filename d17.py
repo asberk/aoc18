@@ -691,10 +691,14 @@ if __name__ == "__main__":
         )
 
     total_water = 0
+    amount_of_still_water = 0
     for loc, cell in wf.cells.items():
         if cell.is_water():
             total_water += 1
-    print(total_water)
+            if cell.is_still():
+                amount_of_still_water += 1
+    print("Part 1:", total_water)
+    print("Part 2:", amount_of_still_water)
 
 
 # # d17.py ends here
