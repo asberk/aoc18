@@ -14,15 +14,18 @@ import numpy as np
 from util import read
 
 
-def _valid_register_address(*args):
-    for x in args:
-        assert x >= 0, f"Unknown register address {x}."
-        assert x < 4, f"Unknown register address {x}."
-    return
+def create_address_validator(register_max=4):
+    def _valid_register_address(*args):
+        for x in args:
+            assert x >= 0, f"Unknown register address {x}."
+            assert x < register_max, f"Unknown register address {x}."
+        return
+
+    return _valid_register_address
 
 
 class Instruction:
-    def __init__(self, op, regA=True, regB=True, op_name=None):
+    def __init__(self, op, regA=True, regB=True, op_name=None, register_max=4):
         self.op = op
         if regA == "r":
             regA = True
@@ -35,16 +38,17 @@ class Instruction:
         self.regA = regA
         self.regB = regB
         self.op_name = op_name
+        self._validate_address = create_address_validator(register_max)
 
     def __call__(self, registers, A, B, C):
         if self.regA and self.regB:
-            _valid_register_address(A, B, C)
+            self._validate_address(A, B, C)
             registers[C] = self.op(registers[A], registers[B])
         elif self.regA:
-            _valid_register_address(A, C)
+            self._validate_address(A, C)
             registers[C] = self.op(registers[A], B)
         elif self.regB:
-            _valid_register_address(B, C)
+            self._validate_address(B, C)
             registers[C] = self.op(A, registers[B])
         else:
             registers[C] = self.op(A, B)
@@ -69,10 +73,17 @@ op_dict = {
 }
 
 
-def create_instructions():
+def create_instructions(register_max=4):
 
     instructions = {
-        k1 + k2: Instruction(op_dict[k1], regA=True, regB=k2 == "r", op_name=k1)
+        k1
+        + k2: Instruction(
+            op_dict[k1],
+            regA=True,
+            regB=k2 == "r",
+            op_name=k1,
+            register_max=register_max,
+        )
         for k1 in ["add", "mul", "ban", "bor"]
         for k2 in ["r", "i"]
     }
@@ -83,12 +94,20 @@ def create_instructions():
                 continue
             for k1 in ["gt", "eq"]:
                 instructions[k1 + regA + regB] = Instruction(
-                    op_dict[k1], regA=regA == "r", regB=regB == "r", op_name=k1,
+                    op_dict[k1],
+                    regA=regA == "r",
+                    regB=regB == "r",
+                    op_name=k1,
+                    register_max=register_max,
                 )
 
     for regA in ["r", "i"]:
         instructions["set" + regA] = Instruction(
-            op_dict["set"], regA=regA == "r", regB=False, op_name="set"
+            op_dict["set"],
+            regA=regA == "r",
+            regB=False,
+            op_name="set",
+            register_max=register_max,
         )
     return instructions
 
@@ -137,34 +156,26 @@ def get_opcode_from_bunch(bunch):
     return int(bunch[1].split()[0])
 
 
-t0 = time()
-instructions = create_instructions()
+def part_one(puzzle_input, instructions, op_codes, bunches):
+    t0 = time()
 
-puzzle_input = read("16")
+    results = []
+    results_counter = []
 
-bunches = [puzzle_input[4 * k : 4 * (k + 1) - 1] for k in range(773)]
-op_codes = [get_opcode_from_bunch(bunch) for bunch in bunches]
+    for i, bunch in enumerate(bunches):
+        results_counter.append(0)
+        results.append([])
+        for j, (inst_name, inst) in enumerate(instructions.items()):
+            if try_instruction_on_bunch(inst, bunch):
+                results_counter[-1] += 1
+                results[-1].append(inst_name)
 
-results = []
-results_counter = []
-
-for i, bunch in enumerate(bunches):
-    results_counter.append(0)
-    results.append([])
-    for j, (inst_name, inst) in enumerate(instructions.items()):
-        if try_instruction_on_bunch(inst, bunch):
-            results_counter[-1] += 1
-            results[-1].append(inst_name)
-
-
-p1_ans = sum(1 for x in results_counter if x >= 3)
-t1 = time()
-print("Part 1")
-print(p1_ans)
-print(f"Duration: {t1 - t0:.3f} sec")
-
-
-# Part 2
+    p1_ans = sum(1 for x in results_counter if x >= 3)
+    t1 = time()
+    print("Part 1")
+    print(p1_ans)
+    print(f"Duration: {t1 - t0:.3f} sec")
+    return results, results_counter
 
 
 def check_column(col):
@@ -184,7 +195,7 @@ def go_through_columns(dframe):
     return None, dframe
 
 
-def get_pairings(op_codes, results, results_counter):
+def get_pairings(op_codes, instructions, results, results_counter):
     num_samples = len(op_codes)
     inst_names = list(instructions.keys())
     inst_idx = {key: i for i, key in enumerate(inst_names)}
@@ -220,20 +231,41 @@ def get_pairings(op_codes, results, results_counter):
     return pairings
 
 
-t2 = time()
-pairings = get_pairings(op_codes, results, results_counter)
-# print(pairings)
-p2_input = puzzle_input[3094:]
+def part_two(puzzle_input, instructions, op_codes, results, results_counter):
+    t2 = time()
+    pairings = get_pairings(op_codes, instructions, results, results_counter)
+    # print(pairings)
+    p2_input = puzzle_input[3094:]
 
-registers = [0] * 4
-for line in p2_input:
-    parsed_line = parse_line(line)
-    inst = instructions[pairings[parsed_line[0]]]
-    registers = inst(registers, *parsed_line[1:])
-t3 = time()
+    registers = [0] * 4
+    for line in p2_input:
+        parsed_line = parse_line(line)
+        inst = instructions[pairings[parsed_line[0]]]
+        registers = inst(registers, *parsed_line[1:])
+    t3 = time()
 
-print("\nPart 2")
-print(registers[0])
-print(f"Duration: {t3 - t2:.3f} sec")
+    print("\nPart 2")
+    print(registers[0])
+    print(f"Duration: {t3 - t2:.3f} sec")
+    return
+
+
+def main():
+
+    instructions = create_instructions()
+    puzzle_input = read("16")
+    bunches = [puzzle_input[4 * k : 4 * (k + 1) - 1] for k in range(773)]
+    op_codes = [get_opcode_from_bunch(bunch) for bunch in bunches]
+
+    results, results_counter = part_one(
+        puzzle_input, instructions, op_codes, bunches
+    )
+    part_two(puzzle_input, instructions, op_codes, results, results_counter)
+    return
+
+
+if __name__ == "__main__":
+    main()
+
 
 # # d16.py ends here
