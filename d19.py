@@ -54,10 +54,10 @@ def run_program(
         register_history = []
         history = []
 
-    while (n_iters is None) or (n_iters <= max_iters):
+    while (max_iters is None) or (n_iters <= max_iters):
         inst_no = registers[instruction_pointer]
         if (inst_no < 0) or (inst_no >= program_length):
-            print(f"n_iters: {n_iters}")
+            print(f"num iters: {n_iters}")
             if track_register_history is not None:
                 return registers, register_history, history
             return registers
@@ -82,66 +82,42 @@ def part_one():
     instruction_pointer, program = parse_input(puzzle_input)
     final_registers = run_program(instruction_pointer, program)
     p1_answer = final_registers[0]
-    print("final_register:", final_registers)
-    print(f"Part 1: {p1_answer}")
+    print("final_state:", final_registers)
+    print(f"Part_1: {p1_answer}")
     return
 
 
 def part_two(max_iters=None):
     instruction_pointer, program = parse_input(puzzle_input)
     registers = [1] + [0] * 5
-    final_registers, register_history, history = run_program(
-        instruction_pointer,
-        program,
-        registers,
-        track_register_history=True,
-        max_iters=50,
+    initial_state = run_program(
+        instruction_pointer, program, registers, max_iters=49,
     )
+    C = initial_state[2]
+    initial_state[3] = 9
+    initial_state[5] = C + 1
 
-    # Option 2
-    registers = [0, 1, 10551282, 9, 0, 10551282 + 1]
-    final_registers, register_history, history = run_program(
-        instruction_pointer,
-        program,
-        registers,
-        track_register_history=False,
-        max_iters=max_iters,
+    r0, r1, r2, ip, r4, r5 = initial_state
+    while True:
+        if (r2 % r1) == 0:
+            r0 += r1
+        r1 += 1
+        if r1 > r2:
+            ip = 13
+            r4 = 1
+            break
+    intermediate_state = [r0, r1, r2, ip, r4, r5]
+    final_state = run_program(
+        instruction_pointer, program, intermediate_state, max_iters=max_iters
     )
-    print(f"Part 2: {final_registers[instruction_pointer]}")
-    return register_history, history, instruction_pointer, program
+    print("final_state:", final_state)
+    print(f"Part_2: {final_state[0]}")
+    return
 
 
 if __name__ == "__main__":
-    # part_one()
-    register_history, history, instruction_pointer, program = part_two(100000)
-    treg_hist = tuple(zip(*register_history))
+    part_one()
+    part_two(100)
 
-    fig, ax = plt.subplots(2, 3, figsize=(15, 6), sharex=True)
-    ax = ax.ravel()
-    for i, entry in enumerate(treg_hist):
-        ax[i].plot(entry[:200])
-        ax[i].set_title(f"{i}")
-        ax[i].set_ylim(-1, min(1000, max(entry[:200])))
-    plt.show(fig)
-    plt.close(fig)
-
-    subset = [
-        reg_entries
-        for reg_entries, val in zip(register_history, treg_hist[4])
-        if val != 0
-    ]
-    tsubset = tuple(zip(*subset))
-
-    fig, ax = plt.subplots(2, 3, figsize=(15, 6), sharex=True)
-    ax = ax.ravel()
-    for i, entry in enumerate(tsubset):
-        ax[i].plot(entry[35:1000])
-        ax[i].set_title(f"{i}")
-        ax[i].set_ylim(-1, min(1000, max(entry[35:1000])))
-    plt.show(fig)
-    plt.close(fig)
-    del fig, ax
-
-    len(program)
 
 # # d19.py ends here
